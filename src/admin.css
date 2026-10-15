@@ -1,0 +1,22 @@
+/* Panel de administración (sitio aparte). Usa las variables y clases de la app (styles.css). */
+.adm-quien{margin-left:auto}
+.admin-cab .btn{margin-left:0;white-space:nowrap}
+.admin-cab{flex-wrap:wrap}
+.adm-tabs{gap:6px;flex-wrap:wrap}
+.adm-entrar{max-width:560px}
+.adm-correo{flex:1 1 240px}
+.adm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.adm-kpi{display:flex;flex-direction:column;gap:4px}
+.adm-kpi b{font:600 28px var(--f-display)}
+.adm-grupos{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.adm-grupos h3{font-size:14px;margin:0 0 8px}
+.adm-grupos>p{grid-column:1/-1;margin:0}
+.adm-barras{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.adm-barras li{display:grid;grid-template-columns:minmax(90px,1fr) 2fr auto;gap:8px;align-items:center;font-size:13px}
+.adm-barra{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.adm-barra i{display:block;height:100%;background:var(--accent)}
+.adm-tabla{overflow-x:auto}
+.adm-tabla table{border-collapse:collapse;width:100%;font-size:13px}
+.adm-tabla th,.adm-tabla td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.adm-det pre{max-height:360px;overflow:auto;font:12px var(--f-mono);background:var(--bg);padding:10px;border-radius:10px}
+@media (max-width:600px){.adm-quien{display:none}}
