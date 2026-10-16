@@ -34,6 +34,9 @@ export function crearAdmin({ nube = NUBE, fetchFn = globalThis.fetch } = {}) {
   return {
     // create_user: false. Este sitio no crea cuentas: solo entra quien ya existe.
     enviarEnlace: (email, volverA) => pedir(`/auth/v1/otp?redirect_to=${encodeURIComponent(volverA)}`, { metodo: 'POST', cuerpo: { email, create_user: false } }),
+    // Entrar con Google: Supabase hace el inicio de sesión y vuelve aquí con la sesión en el hash, igual que el enlace del correo.
+    // Requiere el proveedor Google activado en Supabase (Authentication › Sign In / Providers).
+    urlGoogle: (volverA) => `${nube.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(volverA)}`,
     esAdmin: async (sesion) => (await rpc('es_admin', sesion)) === true,
     totales: (sesion) => rpc('admin_totales', sesion),
     fincas: (sesion) => rpc('admin_fincas', sesion),

@@ -20,3 +20,5 @@
 .adm-tabla th,.adm-tabla td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 .adm-det pre{max-height:360px;overflow:auto;font:12px var(--f-mono);background:var(--bg);padding:10px;border-radius:10px}
 @media (max-width:600px){.adm-quien{display:none}}
+.adm-google{align-self:flex-start;margin:4px 0}
+.adm-entrar{display:flex;flex-direction:column;gap:8px}

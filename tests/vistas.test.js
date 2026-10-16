@@ -36,7 +36,7 @@ test('vistas vacías', () => {
 test('el repositorio no guarda correos ni claves secretas', () => {
   const raiz = new URL('..', import.meta.url).pathname;
   const archivos = [];
-  const recorrer = (d) => { for (const n of readdirSync(d)) { if (n === '.git' || n === 'node_modules') continue; const p = join(d, n); statSync(p).isDirectory() ? recorrer(p) : archivos.push(p); } };
+  const recorrer = (d) => { for (const n of readdirSync(d)) { if (n.startsWith('.') || n === 'node_modules') continue; const p = join(d, n); statSync(p).isDirectory() ? recorrer(p) : archivos.push(p); } };
   recorrer(raiz);
   for (const p of archivos) {
     const t = readFileSync(p, 'utf8');
@@ -50,4 +50,13 @@ test('index.html tiene noindex y CSP sin unsafe en scripts', () => {
   const h = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(h, /noindex, nofollow/);
   assert.match(h, /script-src 'self' https:\/\/trofaxis\.github\.io;/);
+});
+
+test('entrar: botón de Google y el enlace por correo como alternativa', async () => {
+  const { vistaEntrar } = await import('../src/vistas.js');
+  const h = vistaEntrar();
+  assert.match(h, /data-adm="google"[^>]*>Continuar con Google/);
+  assert.match(h, /data-adm="entrar"/);
+  const { crearAdmin } = await import('../src/nube.js');
+  assert.equal(crearAdmin().urlGoogle('https://x.io/a/'), 'https://kfybqlknlkxrqphwopfx.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fx.io%2Fa%2F');
 });

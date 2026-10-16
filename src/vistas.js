@@ -25,10 +25,12 @@ export function vistaEntrar(msg = '') {
   return `<header class="admin-cab"><b>Trofaxis</b> · Administración</header>
   <section class="card adm-entrar">
     <h2>Entrar como administrador</h2>
-    <p class="muted">Te llega un enlace al correo. Solo entran cuentas que ya existen en Trofaxis y están marcadas como administradoras en la base de datos.</p>
+    <p class="muted">Solo entran cuentas que ya existen en Trofaxis y están marcadas como administradoras en la base de datos.</p>
+    <button type="button" class="btn primary adm-google" data-adm="google">Continuar con Google</button>
+    <p class="muted small">O, si prefieres, te enviamos un enlace al correo:</p>
     <form class="row" data-adm="entrar">
       <div class="f adm-correo"><label for="adm-email">Correo</label><input id="adm-email" type="email" required autocomplete="email"></div>
-      <button class="btn primary" type="submit">Enviar enlace</button>
+      <button class="btn" type="submit">Enviar enlace</button>
     </form>
     ${msg ? `<p class="small" role="status">${esc(msg)}</p>` : ''}
   </section>`;
