@@ -57,6 +57,7 @@ app.addEventListener('submit', async (ev) => {
   catch (e) { render(e?.message || 'No se pudo enviar el enlace.'); }
 });
 app.addEventListener('click', (ev) => {
+  if (ev.target.closest('[data-adm="google"]')) { location.assign(admin.urlGoogle(location.origin + location.pathname)); return; }
   if (ev.target.closest('[data-adm="salir"]')) { borrarSesion(); sesion = null; render('Saliste del panel.'); }
 });
 addEventListener('hashchange', () => render());
