@@ -21,24 +21,44 @@ export function cabecera(activa, email) {
     `<a class="btn sm${p.id === activa ? ' primary' : ''}" href="#${p.id}"${p.id === activa ? ' aria-current="page"' : ''}>${esc(p.nombre)}</a>`).join('')}</nav>`;
 }
 
-export function vistaEntrar(msg = '') {
-  return `<header class="admin-cab"><b>Trofaxis</b> · Administración</header>
-  <section class="card adm-entrar">
-    <h2>Entrar como administrador</h2>
-    <p class="muted">Solo entran cuentas que ya existen en Trofaxis y están marcadas como administradoras en la base de datos.</p>
-    <button type="button" class="btn primary adm-google" data-adm="google">Continuar con Google</button>
-    <p class="muted small">O, si prefieres, te enviamos un enlace al correo:</p>
-    <form class="row" data-adm="entrar">
-      <div class="f adm-correo"><label for="adm-email">Correo</label><input id="adm-email" type="email" required autocomplete="email"></div>
-      <button class="btn" type="submit">Enviar enlace</button>
-    </form>
-    ${msg ? `<p class="small" role="status">${esc(msg)}</p>` : ''}
-  </section>`;
+// Pantalla de entrada con el mismo diseño que la de la app (estilo OpenAI): cuenta recordada, otra cuenta de Google
+// o enlace al correo. Las clases .bv, .cta-* y .bv-btn vienen de styles.css de la app publicada.
+const HOJA = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>';
+export const inicial = (email) => (String(email || '').trim()[0] || '?').toUpperCase();
+const quien = (email) => `<span class="cta-avatar" aria-hidden="true">${esc(inicial(email))}</span><span class="cta-quien"><b>${esc(String(email).split('@')[0])}</b><span class="muted small">${esc(email)}</span></span>`;
+const pantalla = (cuerpo) => `<section class="bv cta" aria-labelledby="cta-titulo"><div class="cta-centro">
+    <span class="logo bv-logo" aria-hidden="true">${HOJA}</span>${cuerpo}</div></section>`;
+const aviso = (msg) => (msg ? `<div class="notice" role="status"><span>${esc(msg)}</span></div>` : '');
+
+export function vistaEntrar({ msg = '', cuenta = {}, correo = false } = {}) {
+  const email = cuenta.email || '';
+  const recordada = email
+    ? `<div class="cta-tarjeta">
+        <button type="button" class="cta-elegir" data-adm="cuenta">${quien(email)}</button>
+        <button type="button" class="cta-x" data-adm="olvidar" aria-label="Quitar ${esc(email)} de este dispositivo">×</button>
+      </div>
+      <div class="cta-o" role="separator"><span>o</span></div>` : '';
+  const formCorreo = correo
+    ? `<form class="adm-form" data-adm="entrar">
+        <div class="f"><label for="adm-email">Tu correo</label><input id="adm-email" type="email" required autocomplete="email" value="${esc(email)}"><span class="hint">Te enviamos un enlace de un solo uso. No hay contraseñas.</span></div>
+        <button class="btn primary bv-btn" type="submit">Enviarme el enlace</button>
+      </form>`
+    : '<button type="button" class="btn bv-btn" data-adm="correo">Entrar con un enlace a mi correo</button>';
+  return pantalla(`
+      <h1 id="cta-titulo">${email ? 'Te damos la bienvenida de nuevo' : 'Entrar como administrador'}</h1>
+      <p class="muted">${email ? 'Elige una cuenta para entrar al panel de Trofaxis.' : 'Solo entran cuentas marcadas como administradoras en la base de datos.'}</p>
+      ${aviso(msg)}
+      ${recordada}
+      <button type="button" class="btn ${email ? '' : 'primary'} bv-btn" data-adm="google">${email ? 'Usar otra cuenta de Google' : 'Continuar con Google'}</button>
+      ${formCorreo}
+      <a class="btn bv-btn bv-fantasma" href="https://trofaxis.github.io/" rel="noopener">Ir a la app</a>`);
 }
 
-export const vistaNoAdmin = (email) => `<header class="admin-cab"><b>Trofaxis</b> · Administración</header>
-  <section class="card"><h2>Sin permiso</h2><p>La cuenta ${esc(email)} no es administradora. Nada de los datos de usuarios se descargó y se cerró la sesión. Si la cuenta no tenía datos en Trofaxis, también se borró.</p>
-  <button type="button" class="btn" data-adm="volver">Entrar con otra cuenta</button></section>`;
+export const vistaNoAdmin = (email) => pantalla(`
+      <h1 id="cta-titulo">Sin permiso</h1>
+      <p class="muted">La cuenta ${esc(email)} no es administradora. Nada de los datos de usuarios se descargó y se cerró la sesión. Si la cuenta no tenía datos en Trofaxis, también se borró.</p>
+      <button type="button" class="btn primary bv-btn" data-adm="volver">Entrar con otra cuenta</button>
+      <a class="btn bv-btn bv-fantasma" href="https://trofaxis.github.io/" rel="noopener">Ir a la app</a>`);
 
 function barras(obj, titulo) {
   const filas = Object.entries(obj || {}).sort((a, b) => b[1] - a[1]);
