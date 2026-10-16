@@ -22,10 +22,17 @@ const pestana = () => { const id = location.hash.slice(1); return PESTANAS.some(
 
 async function render(msg = '') {
   if (!(await sesionVigente())) { app.innerHTML = vistaEntrar(msg); return; }
-  let esAdmin = false;
+  let esAdmin = null;
   try { esAdmin = await admin.esAdmin(sesion); }
   catch (e) { if (e instanceof ErrorAdmin && e.estado === 401) { borrarSesion(); sesion = null; app.innerHTML = vistaEntrar(e.message); return; } }
-  if (!esAdmin) { app.innerHTML = vistaNoAdmin(sesion.email); return; }
+  if (esAdmin === false) {
+    // Entrar con Google crea la cuenta aunque no sea admin: si quedó vacía, se borra y se cierra la sesión.
+    const email = sesion.email;
+    try { await admin.descartarCuentaVacia(sesion); } catch { /* sin conexión: la cuenta vacía no cuenta como usuario */ }
+    borrarSesion(); sesion = null;
+    app.innerHTML = vistaNoAdmin(email); return;
+  }
+  if (!esAdmin) { app.innerHTML = vistaEntrar('No se pudo comprobar el permiso. Revisa la conexión y vuelve a intentar.'); return; }
 
   const id = pestana();
   const cab = cabecera(id, sesion.email);
@@ -59,6 +66,7 @@ app.addEventListener('submit', async (ev) => {
 app.addEventListener('click', (ev) => {
   if (ev.target.closest('[data-adm="google"]')) { location.assign(admin.urlGoogle(location.origin + location.pathname)); return; }
   if (ev.target.closest('[data-adm="salir"]')) { borrarSesion(); sesion = null; render('Saliste del panel.'); }
+  if (ev.target.closest('[data-adm="volver"]')) { render(); }
 });
 addEventListener('hashchange', () => render());
 
