@@ -36,9 +36,9 @@ export function vistaEntrar(msg = '') {
   </section>`;
 }
 
-export const vistaNoAdmin = (email) => `<header class="admin-cab"><b>Trofaxis</b> · Administración
-  <button type="button" class="btn sm" data-adm="salir">Salir</button></header>
-  <section class="card"><h2>Sin permiso</h2><p>La cuenta ${esc(email)} no es administradora. Nada de los datos de usuarios se descargó.</p></section>`;
+export const vistaNoAdmin = (email) => `<header class="admin-cab"><b>Trofaxis</b> · Administración</header>
+  <section class="card"><h2>Sin permiso</h2><p>La cuenta ${esc(email)} no es administradora. Nada de los datos de usuarios se descargó y se cerró la sesión. Si la cuenta no tenía datos en Trofaxis, también se borró.</p>
+  <button type="button" class="btn" data-adm="volver">Entrar con otra cuenta</button></section>`;
 
 function barras(obj, titulo) {
   const filas = Object.entries(obj || {}).sort((a, b) => b[1] - a[1]);
@@ -51,10 +51,11 @@ function barras(obj, titulo) {
 export function vistaTotales(t) {
   const kpi = (n, txt) => `<div class="card adm-kpi"><b>${num(n)}</b><span class="muted small">${esc(txt)}</span></div>`;
   return `<section class="adm-kpis">
-    ${kpi(t.usuarios, 'cuentas')}${kpi(t.fincas, 'fincas en la nube')}${kpi(t.fincasUltimos30, 'fincas actualizadas en 30 días')}
+    ${kpi(t.usuariosConFinca, 'usuarios con finca en Trofaxis')}${kpi(t.admins, 'administradores del panel')}${kpi(t.fincas, 'fincas en la nube')}${kpi(t.fincasUltimos30, 'fincas actualizadas en 30 días')}
     ${kpi(t.casos, 'casos anónimos compartidos')}${kpi(t.bienvenida, 'respuestas de bienvenida')}</section>
   <section class="card adm-grupos">
     ${barras(t.porFuente, 'Cómo conocieron Trofaxis')}${barras(t.porUso, 'Para qué la usarán')}${barras(t.porDepto, 'Fincas por departamento')}
+    <p class="muted small">Cuentas registradas en total: ${num(t.cuentas)}. Solo cuenta como usuario quien tiene una finca guardada en la nube.</p>
     <p class="muted small">Un departamento con menos de 3 fincas se cuenta como «otros», para que ninguna finca sea reconocible (umbral: criterio propio).</p>
   </section>`;
 }

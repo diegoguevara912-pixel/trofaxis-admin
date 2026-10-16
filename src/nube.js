@@ -38,6 +38,7 @@ export function crearAdmin({ nube = NUBE, fetchFn = globalThis.fetch } = {}) {
     // Requiere el proveedor Google activado en Supabase (Authentication › Sign In / Providers).
     urlGoogle: (volverA) => `${nube.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(volverA)}`,
     esAdmin: async (sesion) => (await rpc('es_admin', sesion)) === true,
+    descartarCuentaVacia: (sesion) => rpc('descartar_cuenta_vacia', sesion),
     totales: (sesion) => rpc('admin_totales', sesion),
     fincas: (sesion) => rpc('admin_fincas', sesion),
     respuestas: (sesion) => rpc('admin_respuestas', sesion),

@@ -9,9 +9,11 @@ test('esc escapa HTML', () => {
 });
 
 test('totales muestra los números y los grupos', () => {
-  const h = vistaTotales({ usuarios: 4, fincas: 3, fincasUltimos30: 2, casos: 1, bienvenida: 5, porFuente: { zamorano: 3 }, porUso: {}, porDepto: { otros: 3 } });
+  const h = vistaTotales({ usuariosConFinca: 2, cuentas: 4, admins: 1, fincas: 3, fincasUltimos30: 2, casos: 1, bienvenida: 5, porFuente: { zamorano: 3 }, porUso: {}, porDepto: { otros: 3 } });
   assert.match(h, /fincas en la nube/);
   assert.match(h, /zamorano/);
+  assert.match(h, /<b>2<\/b><span class="muted small">usuarios con finca/);
+  assert.match(h, /<b>1<\/b><span class="muted small">administradores/);
   assert.match(h, /Sin datos todavía/);
 });
 
