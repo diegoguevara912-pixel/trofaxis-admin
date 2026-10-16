@@ -64,5 +64,8 @@ addEventListener('hashchange', () => render());
 // Al volver del enlace del correo, la sesión llega en el hash; se guarda y se limpia la URL.
 const deHash = sesionDeHash(location.hash);
 if (deHash) { guardarSesion(deHash); history.replaceState(null, '', location.pathname + '#totales'); }
+// Un enlace vencido o ya usado vuelve con #error=…: se avisa y se limpia la URL.
+const errorEnlace = new URLSearchParams(location.hash.slice(1)).get('error_code');
+if (errorEnlace) history.replaceState(null, '', location.pathname + '#totales');
 sesion = deHash || cargarSesion();
-render();
+render(errorEnlace && !sesion ? 'Ese enlace ya venció o ya se usó. Pide uno nuevo.' : '');
