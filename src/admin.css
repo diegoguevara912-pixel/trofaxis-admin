@@ -3,8 +3,6 @@
 .admin-cab .btn{margin-left:0;white-space:nowrap}
 .admin-cab{flex-wrap:wrap}
 .adm-tabs{gap:6px;flex-wrap:wrap}
-.adm-entrar{max-width:560px}
-.adm-correo{flex:1 1 240px}
 .adm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
 .adm-kpi{display:flex;flex-direction:column;gap:4px}
 .adm-kpi b{font:600 28px var(--f-display)}
@@ -20,5 +18,7 @@
 .adm-tabla th,.adm-tabla td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 .adm-det pre{max-height:360px;overflow:auto;font:12px var(--f-mono);background:var(--bg);padding:10px;border-radius:10px}
 @media (max-width:600px){.adm-quien{display:none}}
-.adm-google{align-self:flex-start;margin:4px 0}
-.adm-entrar{display:flex;flex-direction:column;gap:8px}
+/* Entrada (mismo diseño que la app: .bv, .cta-* de styles.css) */
+.adm-form{display:flex;flex-direction:column;gap:12px}
+body.admin.en-bienvenida .admin-main{max-width:none;padding:0;margin:0}
+.bv.cta a.bv-fantasma{color:var(--muted);font-weight:600;text-decoration:none}

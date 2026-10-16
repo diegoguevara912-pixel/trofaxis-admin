@@ -54,11 +54,27 @@ test('index.html tiene noindex y CSP sin unsafe en scripts', () => {
   assert.match(h, /script-src 'self' https:\/\/trofaxis\.github\.io;/);
 });
 
-test('entrar: botón de Google y el enlace por correo como alternativa', async () => {
+test('entrar: mismo diseño que la app, Google y el enlace por correo como alternativa', async () => {
   const { vistaEntrar } = await import('../src/vistas.js');
   const h = vistaEntrar();
+  assert.match(h, /class="bv cta"/);
+  assert.match(h, /Entrar como administrador/);
   assert.match(h, /data-adm="google"[^>]*>Continuar con Google/);
-  assert.match(h, /data-adm="entrar"/);
+  assert.match(h, /data-adm="correo"/);
+  assert.ok(!/data-adm="entrar"/.test(h), 'el formulario del correo sale solo al pedirlo');
+  assert.match(vistaEntrar({ correo: true }), /data-adm="entrar"/);
   const { crearAdmin } = await import('../src/nube.js');
-  assert.equal(crearAdmin().urlGoogle('https://x.io/a/'), 'https://kfybqlknlkxrqphwopfx.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fx.io%2Fa%2F');
+  assert.equal(crearAdmin().urlGoogle('https://x.io/a/'), 'https://kfybqlknlkxrqphwopfx.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fx.io%2Fa%2F&prompt=select_account');
+});
+
+test('entrar: cuenta recordada como en OpenAI, con el texto escapado', async () => {
+  const { vistaEntrar, vistaNoAdmin } = await import('../src/vistas.js');
+  const h = vistaEntrar({ cuenta: { email: 'admin@ejemplo.com' }, msg: 'Saliste del panel.' });
+  assert.match(h, /Te damos la bienvenida de nuevo/);
+  assert.match(h, /data-adm="cuenta"/);
+  assert.match(h, /data-adm="olvidar"/);
+  assert.match(h, />Usar otra cuenta de Google</);
+  assert.match(h, /role="status"><span>Saliste del panel\./);
+  assert.ok(!vistaEntrar({ cuenta: { email: '<b>@x' } }).includes('<b>@x'));
+  assert.match(vistaNoAdmin('a@b.c'), /class="bv cta"[\s\S]*Sin permiso[\s\S]*data-adm="volver"/);
 });

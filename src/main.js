@@ -10,6 +10,18 @@ const admin = crearAdmin();
 const cliente = crearCliente();
 let sesion = null;
 
+// Última cuenta admin que entró en este navegador (solo correo y proveedor), para la pantalla «Te damos la bienvenida de nuevo».
+const CLAVE_CUENTA = 'trofaxis-admin:cuenta:v1';
+const leerCuenta = () => { try { const c = JSON.parse(localStorage.getItem(CLAVE_CUENTA) || '{}'); return { email: String(c.email || ''), proveedor: c.proveedor === 'email' ? 'email' : c.email ? 'google' : '' }; } catch { return { email: '', proveedor: '' }; } };
+const guardarCuenta = (c) => { try { c ? localStorage.setItem(CLAVE_CUENTA, JSON.stringify(c)) : localStorage.removeItem(CLAVE_CUENTA); } catch { /* sin almacenamiento */ } };
+let cuenta = leerCuenta();
+let verCorreo = false;
+let ultimoMsg = '';
+
+// Pantallas de entrada a pantalla completa, con el fondo de la app; el panel usa el ancho normal.
+function pintar(html, entrada) { document.body.classList.toggle('en-bienvenida', entrada); app.innerHTML = html; }
+const entrada = (msg = '') => { ultimoMsg = msg; pintar(vistaEntrar({ msg, cuenta, correo: verCorreo }), true); };
+
 async function sesionVigente() {
   if (sesion && necesitaRenovar(sesion)) {
     try { sesion = await cliente.renovarSesion(sesion); guardarSesion(sesion); }
@@ -21,18 +33,20 @@ async function sesionVigente() {
 const pestana = () => { const id = location.hash.slice(1); return PESTANAS.some((p) => p.id === id) ? id : 'totales'; };
 
 async function render(msg = '') {
-  if (!(await sesionVigente())) { app.innerHTML = vistaEntrar(msg); return; }
+  if (!(await sesionVigente())) { entrada(msg); return; }
   let esAdmin = null;
   try { esAdmin = await admin.esAdmin(sesion); }
-  catch (e) { if (e instanceof ErrorAdmin && e.estado === 401) { borrarSesion(); sesion = null; app.innerHTML = vistaEntrar(e.message); return; } }
+  catch (e) { if (e instanceof ErrorAdmin && e.estado === 401) { borrarSesion(); sesion = null; entrada(e.message); return; } }
   if (esAdmin === false) {
     // Entrar con Google crea la cuenta aunque no sea admin: si quedó vacía, se borra y se cierra la sesión.
     const email = sesion.email;
     try { await admin.descartarCuentaVacia(sesion); } catch { /* sin conexión: la cuenta vacía no cuenta como usuario */ }
     borrarSesion(); sesion = null;
-    app.innerHTML = vistaNoAdmin(email); return;
+    pintar(vistaNoAdmin(email), true); return;
   }
-  if (!esAdmin) { app.innerHTML = vistaEntrar('No se pudo comprobar el permiso. Revisa la conexión y vuelve a intentar.'); return; }
+  if (!esAdmin) { entrada('No se pudo comprobar el permiso. Revisa la conexión y vuelve a intentar.'); return; }
+  cuenta = { email: sesion.email || '', proveedor: sesion.proveedor === 'email' ? 'email' : 'google' }; guardarCuenta(cuenta);
+  document.body.classList.remove('en-bienvenida');
 
   const id = pestana();
   const cab = cabecera(id, sesion.email);
@@ -64,8 +78,12 @@ app.addEventListener('submit', async (ev) => {
   catch (e) { render(e?.message || 'No se pudo enviar el enlace.'); }
 });
 app.addEventListener('click', (ev) => {
-  if (ev.target.closest('[data-adm="google"]')) { location.assign(admin.urlGoogle(location.origin + location.pathname)); return; }
-  if (ev.target.closest('[data-adm="salir"]')) { borrarSesion(); sesion = null; render('Saliste del panel.'); }
+  const irGoogle = () => location.assign(admin.urlGoogle(location.origin + location.pathname));
+  if (ev.target.closest('[data-adm="google"]')) { irGoogle(); return; }
+  if (ev.target.closest('[data-adm="cuenta"]')) { if (cuenta.proveedor === 'email') { verCorreo = true; entrada(ultimoMsg); app.querySelector('#adm-email')?.focus(); } else irGoogle(); return; }
+  if (ev.target.closest('[data-adm="olvidar"]')) { cuenta = { email: '', proveedor: '' }; guardarCuenta(null); entrada(); return; }
+  if (ev.target.closest('[data-adm="correo"]')) { verCorreo = true; entrada(ultimoMsg); app.querySelector('#adm-email')?.focus(); return; }
+  if (ev.target.closest('[data-adm="salir"]')) { borrarSesion(); sesion = null; verCorreo = false; render('Saliste del panel.'); }
   if (ev.target.closest('[data-adm="volver"]')) { render(); }
 });
 addEventListener('hashchange', () => render());
