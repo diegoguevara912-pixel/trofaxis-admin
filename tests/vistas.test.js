@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { esc, vistaTotales, vistaFincas, vistaRespuestas, vistaAccesos, resumenFinca, cabecera } from '../src/vistas.js';
+import { esc, vistaTotales, vistaFincas, vistaRespuestas, vistaAccesos, resumenFinca, cabecera, barraLateral } from '../src/vistas.js';
 
 test('esc escapa HTML', () => {
   assert.equal(esc('<img src=x onerror="a">'), '&lt;img src=x onerror=&quot;a&quot;&gt;');
@@ -12,9 +12,25 @@ test('totales muestra los números y los grupos', () => {
   const h = vistaTotales({ usuariosConFinca: 2, cuentas: 4, admins: 1, fincas: 3, fincasUltimos30: 2, casos: 1, bienvenida: 5, porFuente: { zamorano: 3 }, porUso: {}, porDepto: { otros: 3 } });
   assert.match(h, /fincas en la nube/);
   assert.match(h, /zamorano/);
-  assert.match(h, /<b>2<\/b><span class="muted small">usuarios con finca/);
-  assert.match(h, /<b>1<\/b><span class="muted small">administradores/);
+  assert.match(h, /<b data-contar="2">2<\/b><span class="muted small">usuarios con finca/);
+  assert.match(h, /<b data-contar="1">1<\/b><span class="muted small">administradores/);
   assert.match(h, /Sin datos todavía/);
+  // contar() escribe sin separador de miles: desde 1000 el número queda quieto con su formato, y el 0 no cuenta.
+  const grande = vistaTotales({ usuariosConFinca: 1200, admins: 0 });
+  assert.match(grande, /<b>1[,.]200<\/b><span class="muted small">usuarios con finca/);
+  assert.match(grande, /<b>0<\/b><span class="muted small">administradores/);
+});
+
+test('barra lateral como la de la app: sección activa, cuenta escapada y salir', () => {
+  const b = barraLateral('fincas', '<i>@x.io');
+  assert.match(b, /data-tab="fincas" aria-current="page">[\s\S]*?<span>Fincas<\/span>/);
+  assert.equal((b.match(/aria-current="page"/g) || []).length, 1);
+  assert.equal((b.match(/data-tab="/g) || []).length, 5);
+  assert.ok(!b.includes('<i>@x.io'));
+  assert.match(b, /data-adm="salir"/);
+  assert.match(b, /href="https:\/\/trofaxis\.github\.io\/"/);
+  assert.match(cabecera('accesos'), /class="label">Accesos<\/p><h1>Registro de accesos<\/h1>/);
+  assert.match(cabecera('no-existe'), /<h1>Trofaxis en números<\/h1>/);
 });
 
 test('fincas: un texto con HTML no se inyecta', () => {
@@ -32,7 +48,6 @@ test('vistas vacías', () => {
   assert.match(vistaFincas([]), /Ninguna finca/);
   assert.match(vistaRespuestas({}), /Sin respuestas/);
   assert.match(vistaAccesos([]), /Sin accesos/);
-  assert.match(cabecera('fincas', 'a@b.c'), /aria-current="page">Fincas/);
 });
 
 test('el repositorio no guarda correos ni claves secretas', () => {
@@ -77,4 +92,19 @@ test('entrar: cuenta recordada como en OpenAI, con el texto escapado', async () 
   assert.match(h, /role="status"><span>Saliste del panel\./);
   assert.ok(!vistaEntrar({ cuenta: { email: '<b>@x' } }).includes('<b>@x'));
   assert.match(vistaNoAdmin('a@b.c'), /class="bv cta"[\s\S]*Sin permiso[\s\S]*data-adm="volver"/);
+});
+
+test('index.html trae el fondo y los íconos de la app, y toda animación respeta «reducir movimiento»', () => {
+  const h = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(h, /<div class="aurora" aria-hidden="true">/);
+  for (const id of ['hoja', 'dash', 'brote', 'mensaje', 'grafo', 'historial', 'ir', 'salir']) assert.match(h, new RegExp(`<symbol id="i-${id}"`), id);
+  const css = readFileSync(new URL('../src/admin.css', import.meta.url), 'utf8');
+  const bloques = [];
+  for (const m of css.matchAll(/@media \(prefers-reduced-motion:\s*no-preference\)\s*\{/g)) {
+    let i = m.index + m[0].length, d = 1;
+    while (d && i < css.length) { if (css[i] === '{') d++; else if (css[i] === '}') d--; i++; }
+    bloques.push([m.index, i]);
+  }
+  const fuera = [...css.matchAll(/animation(-name)?\s*:/g)].filter((m) => !bloques.some(([a, b]) => m.index > a && m.index < b));
+  assert.equal(fuera.length, 0, 'mueve las animaciones dentro de @media (prefers-reduced-motion:no-preference)');
 });

@@ -4,21 +4,36 @@ export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&a
 const num = (n) => (Number.isFinite(Number(n)) ? Number(n).toLocaleString('es-HN') : '—');
 const fecha = (s) => { const d = new Date(s); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('es-HN', { dateStyle: 'medium', timeStyle: 'short' }); };
 
+// Secciones del panel: nombre corto para la barra (cabe en la barra de abajo del celular) y cabecera de cada vista.
 export const PESTANAS = [
-  { id: 'totales', nombre: 'Totales' },
-  { id: 'fincas', nombre: 'Fincas' },
-  { id: 'respuestas', nombre: 'Respuestas' },
-  { id: 'cerebro', nombre: 'Cerebro' },
-  { id: 'accesos', nombre: 'Registro de accesos' },
+  { id: 'totales', nombre: 'Totales', ic: 'dash', titulo: 'Trofaxis en números', sub: 'Cuentas, fincas, casos y respuestas de bienvenida, sin datos personales.' },
+  { id: 'fincas', nombre: 'Fincas', ic: 'brote', titulo: 'Fincas en la nube', sub: 'Lo que cada productor guardó en la nube, sin datos que lo identifiquen.' },
+  { id: 'respuestas', nombre: 'Respuestas', ic: 'mensaje', titulo: 'Bienvenida y casos', sub: 'Lo que respondieron al entrar y los casos anónimos que compartieron.' },
+  { id: 'cerebro', nombre: 'Cerebro', ic: 'grafo', titulo: 'El grafo de hechos', sub: 'Cada hecho con su fuente, importado de la app publicada.' },
+  { id: 'accesos', nombre: 'Accesos', ic: 'historial', titulo: 'Registro de accesos', sub: 'Qué datos de usuarios leyó este panel y cuándo.' },
 ];
 
-export function cabecera(activa, email) {
-  return `<header class="admin-cab"><b>Trofaxis</b> · Administración
-    <span class="muted small adm-quien">${esc(email)}</span>
-    <a class="btn sm" href="https://trofaxis.github.io/" rel="noopener">Ir a la app</a>
-    <button type="button" class="btn sm" data-adm="salir">Salir</button></header>
-  <nav class="row adm-tabs" aria-label="Secciones">${PESTANAS.map((p) =>
-    `<a class="btn sm${p.id === activa ? ' primary' : ''}" href="#${p.id}"${p.id === activa ? ' aria-current="page"' : ''}>${esc(p.nombre)}</a>`).join('')}</nav>`;
+const ic = (id) => `<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+
+// Barra lateral de vidrio, igual que la de la app (.side-in, .brand, nav.tabs y .cta-* de styles.css).
+// En el celular pasa arriba y las secciones bajan a una barra fija, como en la app.
+export function barraLateral(activa, email) {
+  return `<div class="brand"><span class="logo" aria-hidden="true">${ic('hoja')}</span><div>Trofaxis<small>Administración</small></div></div>
+    <nav class="tabs" aria-label="Secciones">${PESTANAS.map((p) =>
+      `<button type="button" data-tab="${p.id}"${p.id === activa ? ' aria-current="page"' : ''}>${ic(p.ic)}<span>${esc(p.nombre)}</span></button>`).join('')}</nav>
+    <div class="cta-pie adm-pie">
+      <div class="adm-cuenta">${quien(email)}</div>
+      <div class="adm-acciones">
+        <a class="btn sm" href="https://trofaxis.github.io/" rel="noopener">${ic('ir')}<span>Ir a la app</span></a>
+        <button type="button" class="btn sm" data-adm="salir">${ic('salir')}<span>Salir</span></button>
+      </div>
+    </div>`;
+}
+
+// Cabecera de cada vista, como las de la app: etiqueta, título en Fraunces y una línea de qué hay.
+export function cabecera(activa) {
+  const p = PESTANAS.find((x) => x.id === activa) || PESTANAS[0];
+  return `<section class="panel flat adm-cabecera"><p class="label">${esc(p.nombre)}</p><h1>${esc(p.titulo)}</h1><p class="muted">${esc(p.sub)}</p></section>`;
 }
 
 // Pantalla de entrada con el mismo diseño que la de la app (estilo OpenAI): cuenta recordada, otra cuenta de Google
@@ -68,12 +83,16 @@ function barras(obj, titulo) {
     `<li><span>${esc(k)}</span><span class="adm-barra"><i style="width:${Math.round((n / max) * 100)}%"></i></span><b>${num(n)}</b></li>`).join('')}</ul></div>`;
 }
 
+// Los números cuentan al entrar (efectos.js de la app, data-contar). contar() escribe el número sin separador de miles,
+// así que desde 1000 se muestra quieto con su formato.
+const contable = (n) => { const v = Number(n); return Number.isInteger(v) && v > 0 && v < 1000 ? ` data-contar="${v}"` : ''; };
+
 export function vistaTotales(t) {
-  const kpi = (n, txt) => `<div class="card adm-kpi"><b>${num(n)}</b><span class="muted small">${esc(txt)}</span></div>`;
+  const kpi = (n, txt) => `<div class="card adm-kpi"><b${contable(n)}>${num(n)}</b><span class="muted small">${esc(txt)}</span></div>`;
   return `<section class="adm-kpis">
     ${kpi(t.usuariosConFinca, 'usuarios con finca en Trofaxis')}${kpi(t.admins, 'administradores del panel')}${kpi(t.fincas, 'fincas en la nube')}${kpi(t.fincasUltimos30, 'fincas actualizadas en 30 días')}
     ${kpi(t.casos, 'casos anónimos compartidos')}${kpi(t.bienvenida, 'respuestas de bienvenida')}</section>
-  <section class="card adm-grupos">
+  <section class="panel adm-grupos">
     ${barras(t.porFuente, 'Cómo conocieron Trofaxis')}${barras(t.porUso, 'Para qué la usarán')}${barras(t.porDepto, 'Fincas por departamento')}
     <p class="muted small">Cuentas registradas en total: ${num(t.cuentas)}. Solo cuenta como usuario quien tiene una finca guardada en la nube.</p>
     <p class="muted small">Un departamento con menos de 3 fincas se cuenta como «otros», para que ninguna finca sea reconocible (umbral: criterio propio).</p>
@@ -95,34 +114,34 @@ export function resumenFinca(d = {}) {
 }
 
 export function vistaFincas(filas) {
-  if (!filas?.length) return `<section class="card"><h2>Fincas</h2><p class="muted">Ninguna finca guardada en la nube todavía.</p></section>`;
-  return `<section class="card"><h2>Fincas (${num(filas.length)})</h2>
+  if (!filas?.length) return `<section class="panel"><h2>Fincas</h2><p class="muted">Ninguna finca guardada en la nube todavía.</p></section>`;
+  return `<section class="panel"><h2>Fincas (${num(filas.length)})</h2>
     <p class="muted small">Sin nombre de finca, sin correo y sin coordenadas: cada finca se identifica con un código. Un departamento con menos de 3 fincas sale como «otros». Abrir esta sección quedó en el registro de accesos.</p>
-    <div class="adm-tabla"><table><thead><tr><th>Código</th><th>Actualizada</th><th>Departamento</th><th>Área (ha)</th><th>Cultivos</th><th>Riego</th><th>Especies</th><th>Aplicaciones</th><th>GLOBALG.A.P.</th></tr></thead>
+    <div class="adm-tabla"><table class="data"><thead><tr><th>Código</th><th>Actualizada</th><th>Departamento</th><th class="num">Área (ha)</th><th>Cultivos</th><th>Riego</th><th class="num">Especies</th><th class="num">Aplicaciones</th><th>GLOBALG.A.P.</th></tr></thead>
     <tbody>${filas.map((f) => { const r = resumenFinca(f.datos); return `<tr>
-      <td><code>${esc(f.codigo)}</code></td><td>${fecha(f.actualizado)}</td><td>${esc(r.depto)}</td><td>${num(r.area)}</td>
-      <td>${esc(r.cultivos)}</td><td>${esc(r.riego)}</td><td>${num(r.especies)}</td><td>${num(r.plaguicidas)}</td><td>${esc(r.gg)}</td></tr>`; }).join('')}</tbody></table></div>
+      <td><code>${esc(f.codigo)}</code></td><td>${fecha(f.actualizado)}</td><td>${esc(r.depto)}</td><td class="num">${num(r.area)}</td>
+      <td>${esc(r.cultivos)}</td><td>${esc(r.riego)}</td><td class="num">${num(r.especies)}</td><td class="num">${num(r.plaguicidas)}</td><td>${esc(r.gg)}</td></tr>`; }).join('')}</tbody></table></div>
     ${filas.map((f) => `<details class="adm-det"><summary>Datos completos de <code>${esc(f.codigo)}</code></summary><pre>${esc(JSON.stringify(f.datos, null, 2))}</pre></details>`).join('')}
   </section>`;
 }
 
 export function vistaRespuestas(r) {
   const b = r?.bienvenida || [], c = r?.casos || [];
-  return `<section class="card"><h2>Respuestas de bienvenida (${num(b.length)})</h2>
-    ${b.length ? `<div class="adm-tabla"><table><thead><tr><th>Fecha</th><th>Cómo la conoció</th><th>Para qué</th></tr></thead><tbody>${b.map((x) =>
+  return `<section class="panel"><h2>Respuestas de bienvenida (${num(b.length)})</h2>
+    ${b.length ? `<div class="adm-tabla"><table class="data"><thead><tr><th>Fecha</th><th>Cómo la conoció</th><th>Para qué</th></tr></thead><tbody>${b.map((x) =>
       `<tr><td>${fecha(x.creado)}</td><td>${esc(x.fuente || '—')}</td><td>${esc((x.usos || []).join(', ') || '—')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Sin respuestas todavía.</p>'}
   </section>
-  <section class="card"><h2>Casos anónimos compartidos (${num(c.length)})</h2>
+  <section class="panel"><h2>Casos anónimos compartidos (${num(c.length)})</h2>
     ${c.length ? c.map((x) => `<details class="adm-det"><summary>${fecha(x.creado)} · ${esc(x.perfil?.cultivo || 'sin cultivo')} · ${num((x.acciones || []).length)} acciones</summary><pre>${esc(JSON.stringify(x, null, 2))}</pre></details>`).join('') : '<p class="muted">Ningún caso compartido todavía.</p>'}
   </section>`;
 }
 
 export function vistaAccesos(filas) {
-  return `<section class="card"><h2>Registro de accesos</h2>
+  return `<section class="panel"><h2>Últimas lecturas</h2>
     <p class="muted small">Cada vez que este panel lee datos de usuarios queda una fila. Lo escribe la base de datos, no este sitio, así que no se puede saltar.</p>
-    ${filas?.length ? `<div class="adm-tabla"><table><thead><tr><th>Fecha</th><th>Qué se leyó</th><th>Filas</th></tr></thead><tbody>${filas.map((a) =>
-      `<tr><td>${fecha(a.creado)}</td><td>${esc(a.accion)}</td><td>${num(a.filas)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Sin accesos todavía.</p>'}
+    ${filas?.length ? `<div class="adm-tabla"><table class="data"><thead><tr><th>Fecha</th><th>Qué se leyó</th><th class="num">Filas</th></tr></thead><tbody>${filas.map((a) =>
+      `<tr><td>${fecha(a.creado)}</td><td>${esc(a.accion)}</td><td class="num">${num(a.filas)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Sin accesos todavía.</p>'}
   </section>`;
 }
 
-export const vistaError = (msg) => `<section class="card"><p role="alert">${esc(msg)}</p></section>`;
+export const vistaError = (msg) => `<section class="panel"><p role="alert">${esc(msg)}</p></section>`;

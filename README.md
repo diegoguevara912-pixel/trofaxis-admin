@@ -17,6 +17,10 @@ Panel de administración de [Trofaxis](https://trofaxis.github.io), aparte de la
 - Límite conocido: los textos libres que escribe el usuario (fuente de agua, acciones, criterio de una no conformidad, nombres de cultivos o especies) sí salen en el panel. Si alguien escribe ahí un nombre propio, el panel lo muestra.
 - Las funciones `admin_*` son `security definer` y las puede llamar cualquier sesión (`authenticated`); el asesor de Supabase lo marca como aviso. Es a propósito: la primera línea de cada una corta si `es_admin()` es falso.
 
+## Diseño
+
+Mismo diseño que la app («Vidrio de campo»): usa `styles.css`, `efectos.js` (números que cuentan) y `polen.js` de la app publicada, con la barra lateral de vidrio y la aurora de fondo. `src/admin.css` solo trae lo propio del panel. Con «reducir movimiento» no se anima nada.
+
 ## Probar
 
 `npm test` · Ver en local: `npx --yes http-server -p 8001`
