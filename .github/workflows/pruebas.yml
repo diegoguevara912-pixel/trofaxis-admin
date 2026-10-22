@@ -1,0 +1,44 @@
+# Corre las pruebas del panel en cada PR y en cada cambio a main. Sin build: lo que corre aquí es lo que se publica.
+# La prueba del SQL usa un Postgres desechable del propio GitHub (nunca Supabase) con datos ficticios.
+name: Pruebas
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Revisar sintaxis de src/**/*.js
+        run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
+      - run: npm test
+  sql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - run: psql --version
+      # Sin la 003, la prueba tiene que fallar: así se comprueba que de verdad detecta el problema.
+      - name: La prueba detecta el problema de admin_fincas sin la 003
+        run: '! SIN_003=1 sh sql/pruebas/correr.sh'
+      - name: admin_fincas con la 003 pasa todas las pruebas
+        run: sh sql/pruebas/correr.sh

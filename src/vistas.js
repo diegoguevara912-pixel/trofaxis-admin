@@ -97,7 +97,7 @@ export function resumenFinca(d = {}) {
 export function vistaFincas(filas) {
   if (!filas?.length) return `<section class="card"><h2>Fincas</h2><p class="muted">Ninguna finca guardada en la nube todavía.</p></section>`;
   return `<section class="card"><h2>Fincas (${num(filas.length)})</h2>
-    <p class="muted small">Sin nombre de finca, sin correo y sin coordenadas: cada finca se identifica con un código. Abrir esta sección quedó en el registro de accesos.</p>
+    <p class="muted small">Sin nombre de finca, sin correo y sin coordenadas: cada finca se identifica con un código. Un departamento con menos de 3 fincas sale como «otros». Abrir esta sección quedó en el registro de accesos.</p>
     <div class="adm-tabla"><table><thead><tr><th>Código</th><th>Actualizada</th><th>Departamento</th><th>Área (ha)</th><th>Cultivos</th><th>Riego</th><th>Especies</th><th>Aplicaciones</th><th>GLOBALG.A.P.</th></tr></thead>
     <tbody>${filas.map((f) => { const r = resumenFinca(f.datos); return `<tr>
       <td><code>${esc(f.codigo)}</code></td><td>${fecha(f.actualizado)}</td><td>${esc(r.depto)}</td><td>${num(r.area)}</td>
