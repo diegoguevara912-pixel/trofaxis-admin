@@ -2,10 +2,14 @@
 // El cerebro y el manejo de sesión se importan de la app publicada: una sola fuente de verdad, sin copias.
 import { cargarSesion, guardarSesion, borrarSesion, sesionDeHash, necesitaRenovar, crearCliente } from 'https://trofaxis.github.io/src/nube/cliente.js';
 import { viewCerebro, montarCerebro } from 'https://trofaxis.github.io/src/admin/cerebro.js';
+// Movimiento y polen de la app: los mismos módulos, solo presentación (no tocan datos ni la sesión).
+import { montarEfectos } from 'https://trofaxis.github.io/src/ui/efectos.js';
+import { montarPolen } from 'https://trofaxis.github.io/src/ui/polen.js';
 import { crearAdmin, ErrorAdmin } from './nube.js';
-import { cabecera, vistaEntrar, vistaNoAdmin, vistaTotales, vistaFincas, vistaRespuestas, vistaAccesos, vistaError, PESTANAS } from './vistas.js';
+import { barraLateral, cabecera, vistaEntrar, vistaNoAdmin, vistaTotales, vistaFincas, vistaRespuestas, vistaAccesos, vistaError, PESTANAS } from './vistas.js';
 
 const app = document.getElementById('app');
+const lateral = document.getElementById('adm-lateral');
 const admin = crearAdmin();
 const cliente = crearCliente();
 let sesion = null;
@@ -18,8 +22,25 @@ let cuenta = leerCuenta();
 let verCorreo = false;
 let ultimoMsg = '';
 
-// Pantallas de entrada a pantalla completa, con el fondo de la app; el panel usa el ancho normal.
-function pintar(html, entrada) { document.body.classList.toggle('en-bienvenida', entrada); app.innerHTML = html; }
+// Pantallas de entrada a pantalla completa, con el fondo de la app y sin barra lateral; el panel usa el ancho normal.
+function pintar(html, entrada) {
+  document.body.classList.toggle('en-bienvenida', entrada);
+  if (entrada) { lateral.hidden = true; lateral.firstElementChild.innerHTML = ''; }
+  app.innerHTML = html;
+}
+
+// Entrada de cada vista, como en la app: los paneles suben (#app.entrando en styles.css) y los números cuentan.
+const DURA_ENTRADA = 1500;
+let finEntrada = 0;
+function animarEntrada() {
+  app.classList.remove('entrando');
+  void app.offsetWidth; // reinicia la animación si se vuelve a entrar a la misma vista
+  app.classList.add('entrando');
+  app.style.setProperty('--t', '0ms');
+  clearTimeout(finEntrada);
+  finEntrada = setTimeout(() => app.classList.remove('entrando'), DURA_ENTRADA);
+  montarEfectos(app, 0);
+}
 const entrada = (msg = '') => { ultimoMsg = msg; pintar(vistaEntrar({ msg, cuenta, correo: verCorreo }), true); };
 
 async function sesionVigente() {
@@ -49,7 +70,9 @@ async function render(msg = '') {
   document.body.classList.remove('en-bienvenida');
 
   const id = pestana();
-  const cab = cabecera(id, sesion.email);
+  lateral.firstElementChild.innerHTML = barraLateral(id, sesion.email);
+  lateral.hidden = false;
+  const cab = cabecera(id);
   app.innerHTML = `${cab}<p class="muted">Cargando…</p>`;
   try {
     if (id === 'cerebro') {
@@ -58,6 +81,7 @@ async function render(msg = '') {
       app.innerHTML = `${cab}<div id="adm-cerebro">${viewCerebro()}</div>`;
       app.querySelector('#adm-cerebro .admin-cab')?.remove();
       montarCerebro(app.querySelector('#adm-cerebro'));
+      animarEntrada();
       return;
     }
     const cuerpo = id === 'fincas' ? vistaFincas(await admin.fincas(sesion))
@@ -65,6 +89,7 @@ async function render(msg = '') {
       : id === 'accesos' ? vistaAccesos(await admin.accesos(sesion))
       : vistaTotales(await admin.totales(sesion));
     app.innerHTML = cab + cuerpo;
+    animarEntrada();
   } catch (e) {
     app.innerHTML = cab + vistaError(e?.message || 'No se pudo leer la nube.');
   }
@@ -77,13 +102,18 @@ app.addEventListener('submit', async (ev) => {
   try { await admin.enviarEnlace(email, location.origin + location.pathname); render(`Si la cuenta existe, te llegó un enlace a ${email}. Ábrelo en este navegador.`); }
   catch (e) { render(e?.message || 'No se pudo enviar el enlace.'); }
 });
+// Barra lateral: secciones (cambian el hash) y salir.
+lateral.addEventListener('click', (ev) => {
+  const tab = ev.target.closest('[data-tab]');
+  if (tab) { location.hash = tab.dataset.tab; return; }
+  if (ev.target.closest('[data-adm="salir"]')) { borrarSesion(); sesion = null; verCorreo = false; render('Saliste del panel.'); }
+});
 app.addEventListener('click', (ev) => {
   const irGoogle = () => location.assign(admin.urlGoogle(location.origin + location.pathname));
   if (ev.target.closest('[data-adm="google"]')) { irGoogle(); return; }
   if (ev.target.closest('[data-adm="cuenta"]')) { if (cuenta.proveedor === 'email') { verCorreo = true; entrada(ultimoMsg); app.querySelector('#adm-email')?.focus(); } else irGoogle(); return; }
   if (ev.target.closest('[data-adm="olvidar"]')) { cuenta = { email: '', proveedor: '' }; guardarCuenta(null); entrada(); return; }
   if (ev.target.closest('[data-adm="correo"]')) { verCorreo = true; entrada(ultimoMsg); app.querySelector('#adm-email')?.focus(); return; }
-  if (ev.target.closest('[data-adm="salir"]')) { borrarSesion(); sesion = null; verCorreo = false; render('Saliste del panel.'); }
   if (ev.target.closest('[data-adm="volver"]')) { render(); }
 });
 addEventListener('hashchange', () => render());
@@ -96,3 +126,4 @@ const errorEnlace = new URLSearchParams(location.hash.slice(1)).get('error_code'
 if (errorEnlace) history.replaceState(null, '', location.pathname + '#totales');
 sesion = deHash || cargarSesion();
 render(errorEnlace && !sesion ? 'Ese enlace ya venció o ya se usó. Pide uno nuevo.' : '');
+montarPolen(document.getElementById('polen'));

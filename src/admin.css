@@ -1,24 +1,54 @@
-/* Panel de administración (sitio aparte). Usa las variables y clases de la app (styles.css). */
-.adm-quien{margin-left:auto}
-.admin-cab .btn{margin-left:0;white-space:nowrap}
-.admin-cab{flex-wrap:wrap}
-.adm-tabs{gap:6px;flex-wrap:wrap}
-.adm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-.adm-kpi{display:flex;flex-direction:column;gap:4px}
-.adm-kpi b{font:600 28px var(--f-display)}
-.adm-grupos{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-.adm-grupos h3{font-size:14px;margin:0 0 8px}
+/* Panel de administración (sitio aparte). Usa las variables y clases de la app (styles.css, «Vidrio de campo»):
+   aurora, barra lateral de vidrio, .panel, .card, table.data y la entrada #app.entrando. Aquí solo va lo propio del panel. */
+/* Barra lateral: cuenta y acciones abajo. */
+.adm-pie{display:flex;flex-direction:column;gap:10px}
+.adm-cuenta{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--line);border-radius:18px;background:var(--chip);min-width:0}
+.adm-cuenta .cta-avatar{width:34px;height:34px;font-size:15px}
+.adm-acciones{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.adm-acciones .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
+.adm-acciones .ic{width:16px;height:16px}
+@media (max-width:900px){
+  .adm-pie{flex-direction:row;align-items:center;gap:6px;margin-left:auto}
+  .adm-cuenta{padding:0;border:none;background:none}
+  .adm-cuenta .cta-quien{display:none}
+  .adm-acciones{display:flex}
+  .adm-acciones .btn{padding:8px}
+  .adm-acciones .btn span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+}
+/* En el celular las 5 secciones van en la barra fija de abajo (la app tiene 4). */
+@media (max-width:700px){body.admin nav.tabs{grid-template-columns:repeat(5,minmax(0,1fr))}}
+/* Totales: números grandes en Fraunces y barras con brillo. */
+.adm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.adm-kpi{gap:6px;padding:18px 18px 16px}
+.adm-kpi b{font:300 46px/1 var(--f-display);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.adm-grupos{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px 28px}
+.adm-grupos h3{margin:0 0 10px}
 .adm-grupos>p{grid-column:1/-1;margin:0}
-.adm-barras{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.adm-barras li{display:grid;grid-template-columns:minmax(90px,1fr) 2fr auto;gap:8px;align-items:center;font-size:13px}
-.adm-barra{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
-.adm-barra i{display:block;height:100%;background:var(--accent)}
+.adm-barras{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.adm-barras li{display:grid;grid-template-columns:minmax(90px,1fr) 2fr 2.5em;gap:10px;align-items:center;font-size:13.5px}
+.adm-barras b{font:500 13px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.adm-barra{height:8px;border-radius:99px;background:var(--chip);overflow:hidden}
+.adm-barra i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 55%,transparent),var(--accent));box-shadow:0 0 12px color-mix(in srgb,var(--accent) 50%,transparent)}
+/* Tablas y datos completos. */
 .adm-tabla{overflow-x:auto}
-.adm-tabla table{border-collapse:collapse;width:100%;font-size:13px}
-.adm-tabla th,.adm-tabla td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-.adm-det pre{max-height:360px;overflow:auto;font:12px var(--f-mono);background:var(--bg);padding:10px;border-radius:10px}
-@media (max-width:600px){.adm-quien{display:none}}
-/* Entrada (mismo diseño que la app: .bv, .cta-* de styles.css) */
+.adm-tabla td{white-space:nowrap}
+.adm-tabla td code{font:500 13px var(--f-mono);color:var(--accent)}
+.adm-det summary{cursor:pointer;color:var(--muted)}
+.adm-det summary:hover{color:var(--ink)}
+.adm-det pre{max-height:360px;overflow:auto;font:12px var(--f-mono);background:var(--field);border:1px solid var(--line);padding:12px;border-radius:12px}
+/* Cerebro: sus dos paneles con el mismo espacio que el resto. */
+#adm-cerebro{display:flex;flex-direction:column;gap:20px}
+/* Entrada (mismo diseño que la app: .bv, .cta-* de styles.css). */
 .adm-form{display:flex;flex-direction:column;gap:12px}
-body.admin.en-bienvenida .admin-main{max-width:none;padding:0;margin:0}
 .bv.cta a.bv-fantasma{color:var(--muted);font-weight:600;text-decoration:none}
+/* Movimiento: las tarjetas suben una tras otra y las barras crecen. Nada se mueve con «reducir movimiento». */
+@media (prefers-reduced-motion:no-preference){
+  #app.entrando .adm-kpi{animation:adm-subir .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--dk,.08s) - var(--t,0ms))}
+  #app.entrando .adm-kpi:nth-child(2){--dk:.13s}#app.entrando .adm-kpi:nth-child(3){--dk:.18s}
+  #app.entrando .adm-kpi:nth-child(4){--dk:.23s}#app.entrando .adm-kpi:nth-child(n+5){--dk:.28s}
+  #app.entrando .adm-barra i{animation:adm-crecer .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.3s - var(--t,0ms));transform-origin:0 50%}
+  .adm-kpi{transition:transform .25s,border-color .25s}
+  .adm-kpi:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+}
+@keyframes adm-subir{from{opacity:0;transform:translateY(16px)}}
+@keyframes adm-crecer{from{transform:scaleX(0)}}
