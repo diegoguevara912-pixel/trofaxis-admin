@@ -15,18 +15,27 @@ export const PESTANAS = [
 
 const ic = (id) => `<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
 
-// Barra lateral de vidrio, igual que la de la app (.side-in, .brand, nav.tabs y .cta-* de styles.css).
+// Barra lateral, igual que la de la app (.side-in, .brand, nav.tabs y .cta-* de styles.css).
 // En el celular pasa arriba y las secciones bajan a una barra fija, como en la app.
-export function barraLateral(activa, email) {
+// La cuenta es un botón que abre un menú (correo, tema, ir a la app y cerrar sesión), como el de la app.
+export const TEMAS = [['light', 'Claro'], ['dark', 'Oscuro']];
+export function barraLateral(activa, email, { menu = false, tema = '' } = {}) {
   return `<div class="brand"><span class="logo" aria-hidden="true">${ic('hoja')}</span><div>Trofaxis<small>Administración</small></div></div>
     <nav class="tabs" aria-label="Secciones">${PESTANAS.map((p) =>
       `<button type="button" data-tab="${p.id}"${p.id === activa ? ' aria-current="page"' : ''}>${ic(p.ic)}<span>${esc(p.nombre)}</span></button>`).join('')}</nav>
-    <div class="cta-pie adm-pie">
-      <div class="adm-cuenta">${quien(email)}</div>
-      <div class="adm-acciones">
-        <a class="btn sm" href="https://trofaxis.github.io/" rel="noopener">${ic('ir')}<span>Ir a la app</span></a>
-        <button type="button" class="btn sm" data-adm="salir">${ic('salir')}<span>Salir</span></button>
-      </div>
+    <div class="cta-pie adm-pie">${menuCuenta(email, { menu, tema })}</div>`;
+}
+
+export function menuCuenta(email, { menu = false, tema = '' } = {}) {
+  const boton = `<button type="button" class="cta-boton" data-adm="menu" aria-haspopup="menu" aria-expanded="${menu ? 'true' : 'false'}" aria-controls="adm-menu" aria-label="Cuenta: ${esc(email)}">${quien(email)}</button>`;
+  if (!menu) return boton;
+  return `${boton}<div class="cta-menu" id="adm-menu" role="menu" aria-label="Cuenta">
+      <p class="muted small cta-menu-email">${esc(email)}</p>
+      <div class="cta-temas" role="group" aria-label="Tema">${TEMAS.map(([id, t]) => `<button type="button" data-adm="tema" data-tema="${id}" aria-pressed="${tema === id}">${t}</button>`).join('')}</div>
+      <hr>
+      <a role="menuitem" href="https://trofaxis.github.io/" rel="noopener">Ir a la app</a>
+      <hr>
+      <button type="button" role="menuitem" data-adm="salir">Cerrar sesión</button>
     </div>`;
 }
 

@@ -2,9 +2,8 @@
 // El cerebro y el manejo de sesión se importan de la app publicada: una sola fuente de verdad, sin copias.
 import { cargarSesion, guardarSesion, borrarSesion, sesionDeHash, necesitaRenovar, crearCliente } from 'https://trofaxis.github.io/src/nube/cliente.js';
 import { viewCerebro, montarCerebro } from 'https://trofaxis.github.io/src/admin/cerebro.js';
-// Movimiento y polen de la app: los mismos módulos, solo presentación (no tocan datos ni la sesión).
+// Movimiento de la app: el mismo módulo, solo presentación (no toca datos ni la sesión).
 import { montarEfectos } from 'https://trofaxis.github.io/src/ui/efectos.js';
-import { montarPolen } from 'https://trofaxis.github.io/src/ui/polen.js';
 import { crearAdmin, ErrorAdmin } from './nube.js';
 import { barraLateral, cabecera, vistaEntrar, vistaNoAdmin, vistaTotales, vistaFincas, vistaRespuestas, vistaAccesos, vistaError, PESTANAS } from './vistas.js';
 
@@ -21,6 +20,22 @@ const guardarCuenta = (c) => { try { c ? localStorage.setItem(CLAVE_CUENTA, JSON
 let cuenta = leerCuenta();
 let verCorreo = false;
 let ultimoMsg = '';
+
+// Menú de cuenta de la barra lateral y tema (Claro u Oscuro, como la app). Sin elección, sigue al sistema.
+const CLAVE_TEMA = 'trofaxis-admin:tema:v1';
+let menuAbierto = false;
+let tema = (() => { try { const t = localStorage.getItem(CLAVE_TEMA); return t === 'dark' || t === 'light' ? t : ''; } catch { return ''; } })();
+const temaVisible = () => tema || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+function aplicarTema() { if (tema) document.documentElement.setAttribute('data-theme', tema); else document.documentElement.removeAttribute('data-theme'); }
+aplicarTema();
+function pintarLateral() {
+  if (!sesion) return;
+  lateral.firstElementChild.innerHTML = barraLateral(pestana(), sesion.email, { menu: menuAbierto, tema: temaVisible() });
+}
+function abrirMenu(abrir) {
+  menuAbierto = abrir; pintarLateral();
+  lateral.querySelector(abrir ? '#adm-menu [data-adm="tema"][aria-pressed="true"], #adm-menu [role="menuitem"]' : '[data-adm="menu"]')?.focus();
+}
 
 // Pantallas de entrada a pantalla completa, con el fondo de la app y sin barra lateral; el panel usa el ancho normal.
 function pintar(html, entrada) {
@@ -70,7 +85,8 @@ async function render(msg = '') {
   document.body.classList.remove('en-bienvenida');
 
   const id = pestana();
-  lateral.firstElementChild.innerHTML = barraLateral(id, sesion.email);
+  menuAbierto = false;
+  pintarLateral();
   lateral.hidden = false;
   const cab = cabecera(id);
   app.innerHTML = `${cab}<p class="muted">Cargando…</p>`;
@@ -102,12 +118,22 @@ app.addEventListener('submit', async (ev) => {
   try { await admin.enviarEnlace(email, location.origin + location.pathname); render(`Si la cuenta existe, te llegó un enlace a ${email}. Ábrelo en este navegador.`); }
   catch (e) { render(e?.message || 'No se pudo enviar el enlace.'); }
 });
-// Barra lateral: secciones (cambian el hash) y salir.
+// Barra lateral: secciones (cambian el hash) y menú de cuenta (tema, ir a la app y cerrar sesión).
 lateral.addEventListener('click', (ev) => {
   const tab = ev.target.closest('[data-tab]');
   if (tab) { location.hash = tab.dataset.tab; return; }
-  if (ev.target.closest('[data-adm="salir"]')) { borrarSesion(); sesion = null; verCorreo = false; render('Saliste del panel.'); }
+  if (ev.target.closest('[data-adm="menu"]')) { abrirMenu(!menuAbierto); return; }
+  const t = ev.target.closest('[data-adm="tema"]');
+  if (t) {
+    tema = t.dataset.tema === 'dark' ? 'dark' : 'light';
+    try { localStorage.setItem(CLAVE_TEMA, tema); } catch { /* sin almacenamiento */ }
+    aplicarTema(); pintarLateral(); lateral.querySelector(`[data-adm="tema"][data-tema="${tema}"]`)?.focus(); return;
+  }
+  if (ev.target.closest('[data-adm="salir"]')) { menuAbierto = false; borrarSesion(); sesion = null; verCorreo = false; render('Saliste del panel.'); }
 });
+// El menú se cierra al tocar fuera o con Escape.
+document.addEventListener('click', (ev) => { if (menuAbierto && !ev.target.closest('.adm-pie')) abrirMenu(false); });
+document.addEventListener('keydown', (ev) => { if (menuAbierto && ev.key === 'Escape') abrirMenu(false); });
 app.addEventListener('click', (ev) => {
   const irGoogle = () => location.assign(admin.urlGoogle(location.origin + location.pathname));
   if (ev.target.closest('[data-adm="google"]')) { irGoogle(); return; }
@@ -126,4 +152,3 @@ const errorEnlace = new URLSearchParams(location.hash.slice(1)).get('error_code'
 if (errorEnlace) history.replaceState(null, '', location.pathname + '#totales');
 sesion = deHash || cargarSesion();
 render(errorEnlace && !sesion ? 'Ese enlace ya venció o ya se usó. Pide uno nuevo.' : '');
-montarPolen(document.getElementById('polen'));
