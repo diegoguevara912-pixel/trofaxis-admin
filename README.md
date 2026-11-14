@@ -19,7 +19,7 @@ Panel de administración de [Trofaxis](https://trofaxis.github.io), aparte de la
 
 ## Diseño
 
-Mismo diseño que la app («Vidrio de campo»): usa `styles.css`, `efectos.js` (números que cuentan) y `polen.js` de la app publicada, con la barra lateral de vidrio y la aurora de fondo. `src/admin.css` solo trae lo propio del panel. Con «reducir movimiento» no se anima nada.
+Mismo diseño que la app: usa `styles.css` y `efectos.js` (números que cuentan) de la app publicada, con su barra lateral y su menú de cuenta (correo, tema Claro u Oscuro, ir a la app y cerrar sesión). Sin aurora ni polen, como la app desde el rediseño «Rueda del año». `src/admin.css` solo trae lo propio del panel. Con «reducir movimiento» no se anima nada.
 
 ## Probar
 

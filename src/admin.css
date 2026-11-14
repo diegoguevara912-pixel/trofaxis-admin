@@ -1,20 +1,8 @@
-/* Panel de administración (sitio aparte). Usa las variables y clases de la app (styles.css, «Vidrio de campo»):
-   aurora, barra lateral de vidrio, .panel, .card, table.data y la entrada #app.entrando. Aquí solo va lo propio del panel. */
-/* Barra lateral: cuenta y acciones abajo. */
-.adm-pie{display:flex;flex-direction:column;gap:10px}
-.adm-cuenta{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--line);border-radius:18px;background:var(--chip);min-width:0}
-.adm-cuenta .cta-avatar{width:34px;height:34px;font-size:15px}
-.adm-acciones{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.adm-acciones .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
-.adm-acciones .ic{width:16px;height:16px}
-@media (max-width:900px){
-  .adm-pie{flex-direction:row;align-items:center;gap:6px;margin-left:auto}
-  .adm-cuenta{padding:0;border:none;background:none}
-  .adm-cuenta .cta-quien{display:none}
-  .adm-acciones{display:flex}
-  .adm-acciones .btn{padding:8px}
-  .adm-acciones .btn span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-}
+/* Panel de administración (sitio aparte). Usa las variables y clases de la app (styles.css): barra lateral, .panel,
+   .card, table.data, el menú de cuenta .cta-* y la entrada #app.entrando. Aquí solo va lo propio del panel. */
+/* Barra lateral: el botón de cuenta abajo, con su menú (.cta-boton y .cta-menu de la app). */
+.adm-pie{margin-top:auto}
+@media (max-width:900px){.adm-pie{margin-left:auto;margin-top:0}}
 /* En el celular las 5 secciones van en la barra fija de abajo (la app tiene 4). */
 @media (max-width:700px){body.admin nav.tabs{grid-template-columns:repeat(5,minmax(0,1fr))}}
 /* Totales: números grandes en Fraunces y barras con brillo. */

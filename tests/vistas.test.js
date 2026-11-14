@@ -21,14 +21,24 @@ test('totales muestra los números y los grupos', () => {
   assert.match(grande, /<b>0<\/b><span class="muted small">administradores/);
 });
 
-test('barra lateral como la de la app: sección activa, cuenta escapada y salir', () => {
+test('barra lateral como la de la app: sección activa, cuenta escapada y menú de cuenta', () => {
   const b = barraLateral('fincas', '<i>@x.io');
   assert.match(b, /data-tab="fincas" aria-current="page">[\s\S]*?<span>Fincas<\/span>/);
   assert.equal((b.match(/aria-current="page"/g) || []).length, 1);
   assert.equal((b.match(/data-tab="/g) || []).length, 5);
   assert.ok(!b.includes('<i>@x.io'));
-  assert.match(b, /data-adm="salir"/);
-  assert.match(b, /href="https:\/\/trofaxis\.github\.io\/"/);
+  // Cerrado: un botón que abre el menú, sin el menú en la página.
+  assert.match(b, /<button type="button" class="cta-boton" data-adm="menu" aria-haspopup="menu" aria-expanded="false"/);
+  assert.ok(!b.includes('role="menu"'));
+  // Abierto: correo, tema marcado, ir a la app y cerrar sesión.
+  const m = barraLateral('fincas', '<i>@x.io', { menu: true, tema: 'dark' });
+  assert.match(m, /aria-expanded="true"/);
+  assert.match(m, /id="adm-menu" role="menu"/);
+  assert.match(m, /data-tema="dark" aria-pressed="true"/);
+  assert.match(m, /data-tema="light" aria-pressed="false"/);
+  assert.match(m, /data-adm="salir"/);
+  assert.match(m, /href="https:\/\/trofaxis\.github\.io\/"/);
+  assert.ok(!m.includes('<i>@x.io'));
   assert.match(cabecera('accesos'), /class="label">Accesos<\/p><h1>Registro de accesos<\/h1>/);
   assert.match(cabecera('no-existe'), /<h1>Trofaxis en números<\/h1>/);
 });
@@ -94,10 +104,9 @@ test('entrar: cuenta recordada como en OpenAI, con el texto escapado', async () 
   assert.match(vistaNoAdmin('a@b.c'), /class="bv cta"[\s\S]*Sin permiso[\s\S]*data-adm="volver"/);
 });
 
-test('index.html trae el fondo y los íconos de la app, y toda animación respeta «reducir movimiento»', () => {
+test('index.html trae los íconos de la app, y toda animación respeta «reducir movimiento»', () => {
   const h = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  assert.match(h, /<div class="aurora" aria-hidden="true">/);
-  for (const id of ['hoja', 'dash', 'brote', 'mensaje', 'grafo', 'historial', 'ir', 'salir']) assert.match(h, new RegExp(`<symbol id="i-${id}"`), id);
+  for (const id of ['hoja', 'dash', 'brote', 'mensaje', 'grafo', 'historial']) assert.match(h, new RegExp(`<symbol id="i-${id}"`), id);
   const css = readFileSync(new URL('../src/admin.css', import.meta.url), 'utf8');
   const bloques = [];
   for (const m of css.matchAll(/@media \(prefers-reduced-motion:\s*no-preference\)\s*\{/g)) {
@@ -107,4 +116,12 @@ test('index.html trae el fondo y los íconos de la app, y toda animación respet
   }
   const fuera = [...css.matchAll(/animation(-name)?\s*:/g)].filter((m) => !bloques.some(([a, b]) => m.index > a && m.index < b));
   assert.equal(fuera.length, 0, 'mueve las animaciones dentro de @media (prefers-reduced-motion:no-preference)');
+});
+
+test('la página no tiene el fondo de aurora ni polen, que la app ya no estiliza', () => {
+  // Sin sus estilos (la app los quitó), el lienzo del polen ocupaba una pantalla entera y empujaba el panel hacia abajo.
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.ok(!/aurora|id="polen"/.test(html));
+  assert.ok(!/polen\.js|montarPolen/.test(main));
 });
